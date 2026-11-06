@@ -72,6 +72,6 @@ Adding the baseline comparison resolves the open question more decisively than w
 
 ## TODO / Next Steps
 
-- [ ] Run `bootstrap_significance.py` to get significance tests for all pairwise comparisons on both dev sets.
+- [x] Run `bootstrap_significance.ipynb` to get significance tests for all pairwise comparisons on both dev sets.
 - [ ] Add significance markers to the results tracker in `bert_baseline_results.md` and `report_draft.md` once the bootstrap test is done.
 - [ ] If distillation does not show a significant advantage over joint training, discuss with Ewen whether to run a `DISTILL_WEIGHT` sweep or pivot to EWC/LoRA as an additional mitigation comparison.

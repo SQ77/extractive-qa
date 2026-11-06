@@ -44,6 +44,5 @@ This means sequential fine-tuning, as done here, does not fully achieve the "dom
 
 ## TODO / Next Steps
 
-- [ ] Build a joint-training notebook that combines SQuAD v1.1 and the NewsQA subset into one training set from the start, and compare against both the SQuAD-only baseline and this sequential fine-tune.
-- [ ] If forgetting needs to be reduced without full joint training, consider: lower learning rate, fewer epochs, freezing lower transformer layers, or mixing a portion of SQuAD examples into the NewsQA fine-tuning data (rehearsal).
+- [x] Build a joint-training notebook that combines SQuAD v1.1 and the NewsQA subset into one training set from the start, and compare against both the SQuAD-only baseline and this sequential fine-tune.
 - [ ] Add this three-way comparison (SQuAD-only, sequential fine-tune, joint training) to the main results tracker in `bert_baseline_results.md` once joint training is done.

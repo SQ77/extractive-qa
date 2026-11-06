@@ -65,14 +65,8 @@ This baseline serves as the reference point against which we compare our propose
 - Prof confirmed in class that the proposal is not hard-set and the team can be flexible with it, so swapping the primary backbone (or the order in which models are tried) is acceptable as long as the final report explains what was actually done and why.
 - Plan: validate the boundary-aware method on BERT first. If time allows, also run it on DeBERTa-v3-base for the headline result, since that keeps the comparison the proposal promised (BiDAF vs BERT baseline vs DeBERTa + boundary-aware). If time does not allow, BERT + boundary-aware can serve as the main reported result instead, with this decision explained in the report.
 
-## TODO / Next Steps (mapped to proposal breakdown of work)
+## TODO / Next Steps
 
-- [ ] **Member 1**: NewsQA subset preprocessing and token alignment for the additional dataset.
-- [ ] **Member 2**: Swap `MODEL_CHECKPOINT` to `microsoft/deberta-v3-base`, rerun training pipeline.
-- [ ] **Member 2/3**: Implement the boundary-aware span-prediction head (the project's main novel contribution, not yet started).
-- [ ] **Member 3**: Span decoding and inference testing for the new model once trained.
-- [ ] **Member 4**: BiDAF baseline implementation and evaluation.
-- [ ] **Member 4**: Adversarial SQuAD (AddSent/AddOneSent) evaluation run.
-- [ ] **Member 4**: Layer-wise learning-rate decay ablation.
-- [ ] **Member 5**: Error analysis on BERT baseline predictions (needs `predictions.json` saved first, see gotcha above).
-- [ ] Save `predictions.json` to Drive going forward so it isn't lost between sessions.
+- [x] NewsQA subset preprocessing and token alignment for the additional dataset.
+- [ ] Error analysis on BERT baseline predictions (`qa/predictions_squad_baseline.json` is now saved, so this is unblocked).
+- [x] Save `predictions.json` to Drive going forward so it isn't lost between sessions.
