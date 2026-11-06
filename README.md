@@ -18,7 +18,7 @@ Differences are tested with paired bootstrap significance tests.
 | Joint training | 81.12 | 88.58 | 45.96 | 61.81 |
 | Distillation-regularized fine-tune | 80.08 | 88.06 | 45.66 | 61.47 |
 
-SQuAD is evaluated on the full v1.1 dev set (10,570 questions). NewsQA is evaluated on a 1,003-question dev subset. See the report draft and the `*_results.md` files for details and significance tests.
+SQuAD is evaluated on the full v1.1 dev set (10,570 questions). NewsQA is evaluated on a 1,003-question dev subset. See the `*_results.md` files for details and significance tests.
 
 ## Repository layout
 
@@ -33,7 +33,6 @@ SQuAD is evaluated on the full v1.1 dev set (10,570 questions). NewsQA is evalua
 | `qa/evaluate-v2.0.py` | Official SQuAD scoring script |
 | `qa/predictions_*.json` | Saved dev-set predictions for every model (used by the bootstrap tests) |
 | `bert_baseline_results.md`, `newsqa_finetune_results.md`, `distillation_results.md`, `joint_training_results.md` | Per-experiment write-ups |
-| `report_draft.md` | Draft of the final report |
 
 ## Reproducing
 
