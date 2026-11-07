@@ -81,13 +81,15 @@ ssh -J <user>@stujump.comp.nus.edu.sg <user>@xlogin.comp.nus.edu.sg
 ```bash
 git clone https://github.com/SQ77/extractive-qa.git
 cd extractive-qa
-mkdir -p qa_model
+mkdir -p qa_model qa_model_newsqa qa_model_newsqa_distill qa_model_joint
 ```
 
-**3. Copy the files git doesn't carry.** From your laptop, in the repo root, copy the model files and the two dev sets:
+**3. Copy the files git doesn't carry.** From your laptop, in the repo root, copy the model files for each checkpoint you want to evaluate (`qa_model`, `qa_model_newsqa`, `qa_model_newsqa_distill`, `qa_model_joint`) and the two dev sets:
 
 ```bash
-scp -J <user>@stujump.comp.nus.edu.sg qa_model/config.json qa_model/model.safetensors qa_model/tokenizer.json qa_model/tokenizer_config.json <user>@xlogin.comp.nus.edu.sg:extractive-qa/qa_model/
+for m in qa_model qa_model_newsqa qa_model_newsqa_distill qa_model_joint; do
+  scp -J <user>@stujump.comp.nus.edu.sg $m/config.json $m/model.safetensors $m/tokenizer.json $m/tokenizer_config.json <user>@xlogin.comp.nus.edu.sg:extractive-qa/$m/
+done
 
 scp -J <user>@stujump.comp.nus.edu.sg qa/dev-v1.1.json qa/dev-newsqa.json <user>@xlogin.comp.nus.edu.sg:extractive-qa/qa/
 ```
@@ -113,13 +115,17 @@ Leave the node with `exit` twice (the shell, then the allocation).
 
 ```bash
 cd extractive-qa
-ls qa_model/model.safetensors qa/dev-v1.1.json qa/dev-newsqa.json qa/evaluate-v2.0.py
+ls qa_model/model.safetensors qa_model_newsqa/model.safetensors qa_model_newsqa_distill/model.safetensors qa_model_joint/model.safetensors qa/dev-v1.1.json qa/dev-newsqa.json qa/evaluate-v2.0.py
 ```
 
 Submit the jobs:
 
 ```bash
 sbatch --job-name=infer-base job.sbatch --model_dir qa_model --dev_files qa/dev-v1.1.json qa/dev-newsqa.json
+
+sbatch --job-name=infer-newsqa job.sbatch --model_dir qa_model_newsqa --dev_files qa/dev-v1.1.json qa/dev-newsqa.json
+
+sbatch --job-name=infer-distill job.sbatch --model_dir qa_model_newsqa_distill --dev_files qa/dev-v1.1.json qa/dev-newsqa.json
 
 sbatch --job-name=infer-joint job.sbatch --model_dir qa_model_joint --dev_files qa/dev-newsqa.json
 ```
@@ -131,7 +137,7 @@ squeue --me
 tail -f logs/slurm/qa-infer-<jobid>.out
 ```
 
-**6. Get the results.** The EM/F1 for each dataset are printed in the log, under `=== qa_model on qa/dev-v1.1.json ===` and `=== qa_model on qa/dev-newsqa.json ===`. Download the predictions from your laptop:
+**6. Get the results.** The EM/F1 for each dataset are printed in the log, under headers of the form `=== <model_dir> on <dev_file> ===`, e.g. `=== qa_model_newsqa on qa/dev-v1.1.json ===`. Download the predictions from your laptop:
 
 ```bash
 scp -r <user>@xlogin.comp.nus.edu.sg:extractive-qa/outputs .
