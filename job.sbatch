@@ -1,13 +1,14 @@
 #!/bin/bash
 
-# Runs a pipeline script as a Slurm batch job.
+# Generic Slurm job: runs inference + evaluation (run_infer.sh -> infer.py)
+# for any model on any SQuAD-format dev file(s).
 #
-# Submit this file from the repository root:
-#   sbatch path/to/job_template.sbatch
+# Submit from the repository root. Arguments after job.sbatch are forwarded to infer.py:
+#   sbatch --job-name=infer-base job.sbatch \
+#       --model_dir qa_model --dev_files qa/dev-v1.1.json qa/dev-newsqa.json
 #
-# Extra arguments supplied to sbatch are forwarded to the pipeline script:
-#   sbatch path/to/job_template.sbatch \
-#       --num_shards 4 --shard_id 0
+# Resources can be overridden per submission, e.g. sbatch --time=01:00:00 job.sbatch.
+# Use a distinct --job-name per run: it names the log file in logs/slurm/.
 
 # Name displayed by Slurm commands such as squeue.
 #SBATCH --job-name=qa-infer
@@ -37,7 +38,7 @@ set -euo pipefail
 CONDA_BASE="${CONDA_BASE:-$HOME/miniconda3}"
 CONDA_ENV="${CONDA_ENV:-qa}"
 
-PIPELINE_SCRIPT="run_infer.sh"
+PIPELINE_SCRIPT="${PIPELINE_SCRIPT:-run_infer.sh}"
 
 # ---------------------------------------------------------------------------
 # Repository and logging.

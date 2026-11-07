@@ -155,6 +155,16 @@ def main():
         )
         print(result.stdout, flush=True)
 
+        # Also save the metrics next to the predictions (the eval script prints JSON).
+        try:
+            metrics = json.loads(result.stdout)
+        except json.JSONDecodeError:
+            continue
+        metrics_path = os.path.join(args.out_dir, f"metrics_{model_name}_{dev_name}.json")
+        with open(metrics_path, "w", encoding="utf-8") as f:
+            json.dump(metrics, f, indent=2)
+        print(f"Metrics written to {metrics_path}", flush=True)
+
 
 if __name__ == "__main__":
     main()
