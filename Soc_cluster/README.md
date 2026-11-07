@@ -1,3 +1,5 @@
+## This guide is from https://github.com/isaacNingLee/Unofficial_SoC_Cluster_Guide
+
 # Unofficial NUS SoC Compute Cluster Guide
 
 A beginner-friendly quick-start guide to connecting to the NUS School of Computing (SoC) compute cluster, setting up Conda, finding an available GPU, and running Slurm jobs.

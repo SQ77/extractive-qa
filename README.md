@@ -37,6 +37,7 @@ SQuAD is evaluated on the full v1.1 dev set (10,570 questions). NewsQA is evalua
 | `qa/predictions_*.json` | Saved dev-set predictions for every model (used by the bootstrap tests) |
 | `bert_baseline_results.md`, `newsqa_finetune_results.md`, `distillation_results.md`, `joint_training_results.md` | Per-experiment write-ups |
 | `outputs/` | Predictions written by cluster inference jobs (created when `job.sbatch` runs) |
+| `Soc_cluster/README.md` | SoC Compute Cluster unofficial guide |
 
 ## Reproducing
 
@@ -138,4 +139,9 @@ scp -r <user>@xlogin.comp.nus.edu.sg:extractive-qa/outputs .
 
 ## Setup
 
-Python 3 with a CUDA GPU (experiments ran on a single T4 with fp16). Main dependencies: `torch`, `transformers`, `datasets`, `accelerate`, `numpy`. Training for each model takes roughly 1 to 1.5 hours on a T4.
+Python 3 (3.11 was used on the cluster). Main dependencies: `torch`, `transformers`, `datasets`, `accelerate`, `evaluate`, `numpy`. The notebooks also use Google Drive mounting when run on Colab.
+
+| Task | Environment |
+|---|---|
+| Training (notebooks) | Google Colab with a single T4 GPU and fp16. Each model takes roughly 1 to 1.5 hours. The `pip install` cell is already at the top of each notebook. |
+| Inference and evaluation (`infer.py`) | NUS SoC compute cluster, one H100 (47 GB) via `job.sbatch`, or any CUDA GPU. Needs only `torch`, `transformers`, `datasets`, `numpy`; see Reproducing, Option 2B. |
