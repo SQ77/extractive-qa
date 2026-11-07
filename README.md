@@ -33,6 +33,8 @@ SQuAD is evaluated on the full v1.1 dev set (10,570 questions). NewsQA is evalua
 | `infer.py` | Runs inference and EM/F1 evaluation of a checkpoint on SQuAD-format dev files |
 | `run_infer.sh` | Wrapper that launches `infer.py` |
 | `job.sbatch` | Generic Slurm job script for running inference on the SoC compute cluster |
+| `train.py` | Training script (all four modes) ported from the notebooks, with evaluation |
+| `train.sbatch` | Slurm job script for `train.py` |
 | `qa/evaluate-v2.0.py` | Official SQuAD scoring script |
 | `qa/predictions_*.json` | Saved dev-set predictions for every model (used by the bootstrap tests) |
 | `bert_baseline_results.md`, `newsqa_finetune_results.md`, `distillation_results.md`, `joint_training_results.md` | Per-experiment write-ups |
@@ -106,7 +108,7 @@ Install Miniconda (see `Soc_cluster/README.md`), then create the environment:
 ```bash
 conda create -n qa python=3.11
 conda activate qa
-pip install torch transformers datasets numpy
+pip install torch transformers datasets numpy 'accelerate>=1.1.0'
 ```
 
 Leave the node with `exit` twice (the shell, then the allocation).
@@ -137,11 +139,61 @@ squeue --me
 tail -f logs/slurm/qa-infer-<jobid>.out
 ```
 
-**6. Get the results.** The EM/F1 for each dataset are printed in the log, under headers of the form `=== <model_dir> on <dev_file> ===`, e.g. `=== qa_model_newsqa on qa/dev-v1.1.json ===`. Download the predictions from your laptop:
+**6. Get the results.** The EM/F1 for each dataset are printed in the log, under headers of the form `=== <model_dir> on <dev_file> ===`, e.g. `=== qa_model_newsqa on qa/dev-v1.1.json ===`. They are also saved in `outputs/` as `metrics_<model>_<dev>.json`, next to the predictions in `predictions_<model>_<dev>.json`. Download both from your laptop:
 
 ```bash
-scp -r <user>@xlogin.comp.nus.edu.sg:extractive-qa/outputs .
+scp -J <user>@stujump.comp.nus.edu.sg -r <user>@xlogin.comp.nus.edu.sg:extractive-qa/outputs .
 ```
+
+#### C. NUS SoC compute cluster (training)
+
+`train.py` reproduces the four training notebooks with the same hyperparameters, then evaluates on the dev sets with the official script. `train.sbatch` is the Slurm wrapper (`gpu` partition, 3 h limit, one H100). Complete steps 1 to 4 of section B first, and also copy the training data to the cluster (`qa/train-v1.1.json`, `qa/train-newsqa.json`, `qa/dev-v1.1.json`, `qa/dev-newsqa.json`, `qa/evaluate-v2.0.py`).
+
+| `--mode` | Notebook | Starts from | Saves to |
+|---|---|---|---|
+| `baseline` | `train_qa.ipynb` | `bert-base-uncased` | `qa_model/` |
+| `newsqa` | `finetune_bert_on_newsqa.ipynb` | `--base_model_dir` (default `qa_model`) | `qa_model_newsqa/` |
+| `distill` | `finetune_bert_on_newsqa_distill.ipynb` | `--base_model_dir` (also the frozen teacher) | `qa_model_newsqa_distill/` |
+| `joint` | `train_joint_squad_newsqa.ipynb` | `bert-base-uncased` | `qa_model_joint/` |
+
+`newsqa` and `distill` need the baseline checkpoint, so chain them after it:
+
+```bash
+b=$(sbatch --parsable --job-name=train-baseline train.sbatch --mode baseline)
+sbatch --dependency=afterok:$b --job-name=train-newsqa  train.sbatch --mode newsqa
+sbatch --dependency=afterok:$b --job-name=train-distill train.sbatch --mode distill
+sbatch --job-name=train-joint train.sbatch --mode joint
+```
+
+Add `--max_train_samples 2000 --max_eval_samples 500` for a quick smoke test. Predictions and `metrics_*.json` are written to `outputs_train/` (not `qa/`, so the saved predictions are not overwritten); compare them with the numbers in the Results table. Exact numbers can differ slightly from the Colab runs (different GPU, no gradient checkpointing, nondeterministic kernels).
+
+**Monitor the jobs.**
+
+```bash
+squeue --me                                        
+tail -f logs/slurm/train-baseline-<jobid>.out      
+```
+
+`<jobid>` is printed by `sbatch`, or stored in `$b` if you used the chained commands above.
+
+**Get the results.** After a job completes, check that it produced:
+
+- the model directory in the repo root (`qa_model/`, `qa_model_newsqa/`, `qa_model_newsqa_distill/` or `qa_model_joint/`), containing `model.safetensors`;
+- `outputs_train/predictions_<model_dir>_<dev>.json` and `outputs_train/metrics_<model_dir>_<dev>.json` for each dev set the mode scores (for example `metrics_qa_model_dev-v1.1.json`).
+
+The EM/F1 scores are also printed in the log under `--- <model_dir>_<dev> (<dev_file>) ---` headers. Quick look on the cluster:
+
+```bash
+cat outputs_train/metrics_qa_model_dev-v1.1.json
+```
+
+Download the predictions and metrics from your laptop:
+
+```bash
+scp -J <user>@stujump.comp.nus.edu.sg -r <user>@xlogin.comp.nus.edu.sg:extractive-qa/outputs_train .
+```
+
+The trained models are already on the cluster, so you can run inference with them as in section B. To keep a copy locally, download a model directory the same way (each `model.safetensors` is about 1.3 GB).
 
 ## Setup
 
