@@ -33,6 +33,8 @@ SQuAD is evaluated on the full v1.1 dev set (10,570 questions). NewsQA is evalua
 | `infer.py` | Runs inference and EM/F1 evaluation of a checkpoint on SQuAD-format dev files |
 | `run_infer.sh` | Wrapper that launches `infer.py` |
 | `job.sbatch` | Generic Slurm job script for running inference on the SoC compute cluster |
+| `train.py` | Training script (all four modes) ported from the notebooks, with evaluation |
+| `train.sbatch` | Slurm job script for `train.py` |
 | `qa/evaluate-v2.0.py` | Official SQuAD scoring script |
 | `qa/predictions_*.json` | Saved dev-set predictions for every model (used by the bootstrap tests) |
 | `bert_baseline_results.md`, `newsqa_finetune_results.md`, `distillation_results.md`, `joint_training_results.md` | Per-experiment write-ups |
@@ -142,6 +144,28 @@ tail -f logs/slurm/qa-infer-<jobid>.out
 ```bash
 scp -r <user>@xlogin.comp.nus.edu.sg:extractive-qa/outputs .
 ```
+
+#### C. NUS SoC compute cluster (training)
+
+`train.py` reproduces the four training notebooks with the same hyperparameters, then evaluates on the dev sets with the official script. `train.sbatch` is the Slurm wrapper (4 h limit, one H100). Complete steps 1 to 4 of section B first, and also copy the training data to the cluster (`qa/train-v1.1.json`, `qa/train-newsqa.json`, `qa/dev-v1.1.json`, `qa/dev-newsqa.json`, `qa/evaluate-v2.0.py`).
+
+| `--mode` | Notebook | Starts from | Saves to |
+|---|---|---|---|
+| `baseline` | `train_qa.ipynb` | `bert-base-uncased` | `qa_model/` |
+| `newsqa` | `finetune_bert_on_newsqa.ipynb` | `--base_model_dir` (default `qa_model`) | `qa_model_newsqa/` |
+| `distill` | `finetune_bert_on_newsqa_distill.ipynb` | `--base_model_dir` (also the frozen teacher) | `qa_model_newsqa_distill/` |
+| `joint` | `train_joint_squad_newsqa.ipynb` | `bert-base-uncased` | `qa_model_joint/` |
+
+`newsqa` and `distill` need the baseline checkpoint, so chain them after it:
+
+```bash
+b=$(sbatch --parsable --job-name=train-baseline train.sbatch --mode baseline)
+sbatch --dependency=afterok:$b --job-name=train-newsqa  train.sbatch --mode newsqa
+sbatch --dependency=afterok:$b --job-name=train-distill train.sbatch --mode distill
+sbatch --job-name=train-joint train.sbatch --mode joint
+```
+
+Add `--max_train_samples 2000 --max_eval_samples 500` for a quick smoke test. Predictions and `metrics_*.json` are written to `outputs_train/` (not `qa/`, so the saved predictions are not overwritten); compare them with the numbers in the Results table. Exact numbers can differ slightly from the Colab runs (different GPU, no gradient checkpointing, nondeterministic kernels).
 
 ## Setup
 
