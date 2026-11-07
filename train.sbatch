@@ -12,9 +12,8 @@
 # Use a distinct --job-name per run: it names the log file in logs/slurm/.
 
 #SBATCH --job-name=qa-train
-#SBATCH --partition=gpu-long
-# Joint training (~97k questions, 2 epochs) is the longest run; override with --time if needed.
-#SBATCH --time=04:00:00
+#SBATCH --partition=gpu
+#SBATCH --time=03:00:00
 #SBATCH --gpus=h100-47:1
 #SBATCH --cpus-per-task=8
 #SBATCH --mem-per-cpu=20000

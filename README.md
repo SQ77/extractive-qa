@@ -139,15 +139,15 @@ squeue --me
 tail -f logs/slurm/qa-infer-<jobid>.out
 ```
 
-**6. Get the results.** The EM/F1 for each dataset are printed in the log, under headers of the form `=== <model_dir> on <dev_file> ===`, e.g. `=== qa_model_newsqa on qa/dev-v1.1.json ===`. Download the predictions from your laptop:
+**6. Get the results.** The EM/F1 for each dataset are printed in the log, under headers of the form `=== <model_dir> on <dev_file> ===`, e.g. `=== qa_model_newsqa on qa/dev-v1.1.json ===`. They are also saved in `outputs/` as `metrics_<model>_<dev>.json`, next to the predictions in `predictions_<model>_<dev>.json`. Download both from your laptop:
 
 ```bash
-scp -r <user>@xlogin.comp.nus.edu.sg:extractive-qa/outputs .
+scp -J <user>@stujump.comp.nus.edu.sg -r <user>@xlogin.comp.nus.edu.sg:extractive-qa/outputs .
 ```
 
 #### C. NUS SoC compute cluster (training)
 
-`train.py` reproduces the four training notebooks with the same hyperparameters, then evaluates on the dev sets with the official script. `train.sbatch` is the Slurm wrapper (4 h limit, one H100). Complete steps 1 to 4 of section B first, and also copy the training data to the cluster (`qa/train-v1.1.json`, `qa/train-newsqa.json`, `qa/dev-v1.1.json`, `qa/dev-newsqa.json`, `qa/evaluate-v2.0.py`).
+`train.py` reproduces the four training notebooks with the same hyperparameters, then evaluates on the dev sets with the official script. `train.sbatch` is the Slurm wrapper (`gpu` partition, 3 h limit, one H100; if a run needs longer, override with `--partition=gpu-long --time=04:00:00`). Complete steps 1 to 4 of section B first, and also copy the training data to the cluster (`qa/train-v1.1.json`, `qa/train-newsqa.json`, `qa/dev-v1.1.json`, `qa/dev-newsqa.json`, `qa/evaluate-v2.0.py`).
 
 | `--mode` | Notebook | Starts from | Saves to |
 |---|---|---|---|
