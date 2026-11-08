@@ -35,6 +35,9 @@ SQuAD is evaluated on the full v1.1 dev set (10,570 questions). NewsQA is evalua
 | `job.sbatch` | Generic Slurm job script for running inference on the SoC compute cluster |
 | `train.py` | Training script (all four modes) ported from the notebooks, with evaluation |
 | `train.sbatch` | Slurm job script for `train.py` |
+| `preprocess_newsqa.py` | Script version of `preprocess_newsqa.ipynb` |
+| `bootstrap_significance.py` | Script version of `bootstrap_significance.ipynb` (CPU only) |
+| `cpu.sbatch` | Slurm job script (no GPU) for `preprocess_newsqa.py` and `bootstrap_significance.py` |
 | `qa/evaluate-v2.0.py` | Official SQuAD scoring script |
 | `qa/predictions_*.json` | Saved dev-set predictions for every model (used by the bootstrap tests) |
 | `bert_baseline_results.md`, `newsqa_finetune_results.md`, `distillation_results.md`, `joint_training_results.md` | Per-experiment write-ups |
@@ -194,6 +197,17 @@ scp -J <user>@stujump.comp.nus.edu.sg -r <user>@xlogin.comp.nus.edu.sg:extractiv
 ```
 
 The trained models are already on the cluster, so you can run inference with them as in section B. To keep a copy locally, download a model directory the same way (each `model.safetensors` is about 1.3 GB).
+
+#### D. NUS SoC compute cluster (preprocessing and significance tests)
+
+These two notebooks need no GPU, so they run through `cpu.sbatch`:
+
+```bash
+sbatch --job-name=preprocess cpu.sbatch preprocess_newsqa.py      # writes qa/train-newsqa.json, qa/dev-newsqa.json
+sbatch --job-name=bootstrap  cpu.sbatch bootstrap_significance.py # reads the predictions in qa/
+```
+
+`preprocess_newsqa.py` downloads the raw MRQA files; if compute nodes have no internet, run it on a login node or copy the two `.jsonl.gz` files into `qa/newsqa_raw/` first. `bootstrap_significance.py` takes `--pred_dir outputs_train` or per-model `--squad_pred MODEL=PATH` / `--newsqa_pred MODEL=PATH` overrides to test predictions produced on the cluster. All four training notebooks are already covered by `train.py` (section C).
 
 ## Setup
 
