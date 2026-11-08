@@ -1,19 +1,18 @@
-# Model checkpoints and weights (several GB each; host on Hugging Face Hub if needed)
+# Model checkpoints and weights (get from zipped files submitted)
 qa_model*/
 *.safetensors
 *.pt
 *.pth
 *.bin
 
-# Datasets (download / regenerate with preprocess_newsqa.ipynb)
+# Datasets (download / regenerate with preprocess_newsqa.py)
 qa/*.json
 !qa/predictions_*.json
 qa/newsqa_raw/
 
-# Python / Jupyter
+# Python
 __pycache__/
 *.pyc
-.ipynb_checkpoints/
 
 # OS / editor
 .DS_Store

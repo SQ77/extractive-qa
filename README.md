@@ -18,60 +18,30 @@ Differences are tested with paired bootstrap significance tests.
 | Joint training | 81.12 | 88.58 | 45.96 | 61.81 |
 | Distillation-regularized fine-tune | 80.08 | 88.06 | 45.66 | 61.47 |
 
-SQuAD is evaluated on the full v1.1 dev set (10,570 questions). NewsQA is evaluated on a 1,003-question dev subset. See the `*_results.md` files for details and significance tests.
+SQuAD is evaluated on the full v1.1 dev set (10,570 questions). NewsQA is evaluated on a 1,003-question dev subset.
 
 ## Repository layout
 
 | File | Purpose |
 |---|---|
-| `preprocess_newsqa.ipynb` | Builds the NewsQA subset in SQuAD format from the raw data |
-| `train_qa.ipynb` | SQuAD v1.1 baseline fine-tuning and evaluation |
-| `finetune_bert_on_newsqa.ipynb` | Sequential fine-tuning of the baseline on NewsQA |
-| `finetune_bert_on_newsqa_distill.ipynb` | Sequential fine-tuning with the distillation regularizer |
-| `train_joint_squad_newsqa.ipynb` | Joint training on SQuAD + NewsQA |
-| `bootstrap_significance.ipynb` | Paired bootstrap significance tests on per-question scores |
 | `infer.py` | Runs inference and EM/F1 evaluation of a checkpoint on SQuAD-format dev files |
 | `run_infer.sh` | Wrapper that launches `infer.py` |
 | `job.sbatch` | Generic Slurm job script for running inference on the SoC compute cluster |
-| `train.py` | Training script (all four modes) ported from the notebooks, with evaluation |
+| `train.py` | Training script (all four modes) for all four modes, with evaluation |
 | `train.sbatch` | Slurm job script for `train.py` |
-| `preprocess_newsqa.py` | Script version of `preprocess_newsqa.ipynb` |
-| `bootstrap_significance.py` | Script version of `bootstrap_significance.ipynb` (CPU only) |
+| `preprocess_newsqa.py` | Builds the NewsQA subset in SQuAD format from the raw data |
+| `bootstrap_significance.py` | Paired bootstrap significance tests on per-question scores (CPU only) |
 | `cpu.sbatch` | Slurm job script (no GPU) for `preprocess_newsqa.py` and `bootstrap_significance.py` |
 | `qa/evaluate-v2.0.py` | Official SQuAD scoring script |
 | `qa/predictions_*.json` | Saved dev-set predictions for every model (used by the bootstrap tests) |
-| `bert_baseline_results.md`, `newsqa_finetune_results.md`, `distillation_results.md`, `joint_training_results.md` | Per-experiment write-ups |
 | `outputs/` | Predictions written by cluster inference jobs (created when `job.sbatch` runs) |
 | `Soc_cluster/README.md` | SoC Compute Cluster unofficial guide |
 
 ## Reproducing
 
-There are two ways to reproduce the results.
+This repo contains the scripts for preprocessing, training and inference on the NUS SoC compute cluster. Data and model checkpoints are **not** included in the repo, so you must get them yourself (or copy them from the zipped files submitted).
 
-### Option 1: Google Drive (everything included)
-
-The shared Google Drive folder contains every file in this repo plus all the datasets (SQuAD, NewsQA) and trained model checkpoints, so nothing needs to be downloaded or rebuilt separately.
-
-Drive link: `<add link here>`
-
-### Option 2: This repo
-
-This repo contains the Colab notebooks (for training) and the scripts for running inference on the NUS SoC compute cluster. Data and model checkpoints are **not** included in the repo, so you must get them yourself (or copy them from the Drive).
-
-#### A. Colab notebooks (training and evaluation)
-
-1. **Get the data** and place it under `qa/`:
-   - SQuAD v1.1: `train-v1.1.json`, `dev-v1.1.json`
-   - NewsQA (MRQA 2019 Shared Task release): `NewsQA_train.jsonl.gz`, `NewsQA_dev.jsonl.gz` in `qa/newsqa_raw/`
-2. Run `preprocess_newsqa.ipynb` to produce `qa/train-newsqa.json` and `qa/dev-newsqa.json`.
-3. Run the notebooks in this order (checkpoints are written to `qa_model*/`):
-   1. `train_qa.ipynb` (produces `qa_model/`)
-   2. `finetune_bert_on_newsqa.ipynb` (produces `qa_model_newsqa/`)
-   3. `finetune_bert_on_newsqa_distill.ipynb` (produces `qa_model_newsqa_distill/`)
-   4. `train_joint_squad_newsqa.ipynb` (produces `qa_model_joint/`)
-   5. `bootstrap_significance.ipynb`
-
-#### B. NUS SoC compute cluster (inference and evaluation only)
+#### A. NUS SoC compute cluster (inference and evaluation only)
 
 `job.sbatch`, `run_infer.sh` and `infer.py` evaluate an existing checkpoint on SQuAD-format dev files. Replace `<user>` with your SoC username.
 
@@ -148,16 +118,16 @@ tail -f logs/slurm/qa-infer-<jobid>.out
 scp -J <user>@stujump.comp.nus.edu.sg -r <user>@xlogin.comp.nus.edu.sg:extractive-qa/outputs .
 ```
 
-#### C. NUS SoC compute cluster (training)
+#### B. NUS SoC compute cluster (training)
 
-`train.py` reproduces the four training notebooks with the same hyperparameters, then evaluates on the dev sets with the official script. `train.sbatch` is the Slurm wrapper (`gpu` partition, 3 h limit, one H100). Complete steps 1 to 4 of section B first, and also copy the training data to the cluster (`qa/train-v1.1.json`, `qa/train-newsqa.json`, `qa/dev-v1.1.json`, `qa/dev-newsqa.json`, `qa/evaluate-v2.0.py`).
+`train.py` trains the four models, then evaluates on the dev sets with the official script. `train.sbatch` is the Slurm wrapper (`gpu` partition, 3 h limit, one H100). Complete steps 1 to 4 of section A first, and also copy the training data to the cluster (`qa/train-v1.1.json`, `qa/train-newsqa.json`, `qa/dev-v1.1.json`, `qa/dev-newsqa.json`, `qa/evaluate-v2.0.py`). `qa/train-newsqa.json` and `qa/dev-newsqa.json` are produced by `preprocess_newsqa.py` (section C).
 
-| `--mode` | Notebook | Starts from | Saves to |
-|---|---|---|---|
-| `baseline` | `train_qa.ipynb` | `bert-base-uncased` | `qa_model/` |
-| `newsqa` | `finetune_bert_on_newsqa.ipynb` | `--base_model_dir` (default `qa_model`) | `qa_model_newsqa/` |
-| `distill` | `finetune_bert_on_newsqa_distill.ipynb` | `--base_model_dir` (also the frozen teacher) | `qa_model_newsqa_distill/` |
-| `joint` | `train_joint_squad_newsqa.ipynb` | `bert-base-uncased` | `qa_model_joint/` |
+| `--mode` | Starts from | Saves to |
+|---|---|---|
+| `baseline` | `bert-base-uncased` | `qa_model/` |
+| `newsqa` | `--base_model_dir` (default `qa_model`) | `qa_model_newsqa/` |
+| `distill` | `--base_model_dir` (also the frozen teacher) | `qa_model_newsqa_distill/` |
+| `joint` | `bert-base-uncased` | `qa_model_joint/` |
 
 `newsqa` and `distill` need the baseline checkpoint, so chain them after it:
 
@@ -168,7 +138,7 @@ sbatch --dependency=afterok:$b --job-name=train-distill train.sbatch --mode dist
 sbatch --job-name=train-joint train.sbatch --mode joint
 ```
 
-Add `--max_train_samples 2000 --max_eval_samples 500` for a quick smoke test. Predictions and `metrics_*.json` are written to `outputs_train/` (not `qa/`, so the saved predictions are not overwritten); compare them with the numbers in the Results table. Exact numbers can differ slightly from the Colab runs (different GPU, no gradient checkpointing, nondeterministic kernels).
+Add `--max_train_samples 2000 --max_eval_samples 500` for a quick smoke test. Predictions and `metrics_*.json` are written to `outputs_train/` (not `qa/`, so the saved predictions are not overwritten); compare them with the numbers in the Results table. Exact numbers can differ slightly from the reported results (different GPU, no gradient checkpointing, nondeterministic kernels).
 
 **Monitor the jobs.**
 
@@ -196,24 +166,24 @@ Download the predictions and metrics from your laptop:
 scp -J <user>@stujump.comp.nus.edu.sg -r <user>@xlogin.comp.nus.edu.sg:extractive-qa/outputs_train .
 ```
 
-The trained models are already on the cluster, so you can run inference with them as in section B. To keep a copy locally, download a model directory the same way (each `model.safetensors` is about 1.3 GB).
+The trained models are already on the cluster, so you can run inference with them as in section A. To keep a copy locally, download a model directory the same way (each `model.safetensors` is about 1.3 GB).
 
-#### D. NUS SoC compute cluster (preprocessing and significance tests)
+#### C. NUS SoC compute cluster (preprocessing and significance tests)
 
-These two notebooks need no GPU, so they run through `cpu.sbatch`:
+These two scripts need no GPU, so they run through `cpu.sbatch`:
 
 ```bash
 sbatch --job-name=preprocess cpu.sbatch preprocess_newsqa.py      # writes qa/train-newsqa.json, qa/dev-newsqa.json
 sbatch --job-name=bootstrap  cpu.sbatch bootstrap_significance.py # reads the predictions in qa/
 ```
 
-`preprocess_newsqa.py` downloads the raw MRQA files; if compute nodes have no internet, run it on a login node or copy the two `.jsonl.gz` files into `qa/newsqa_raw/` first. `bootstrap_significance.py` takes `--pred_dir outputs_train` or per-model `--squad_pred MODEL=PATH` / `--newsqa_pred MODEL=PATH` overrides to test predictions produced on the cluster. All four training notebooks are already covered by `train.py` (section C).
+`preprocess_newsqa.py` downloads the raw MRQA files; if compute nodes have no internet, run it on a login node or copy the two `.jsonl.gz` files into `qa/newsqa_raw/` first. `bootstrap_significance.py` takes `--pred_dir outputs_train` or per-model `--squad_pred MODEL=PATH` / `--newsqa_pred MODEL=PATH` overrides to test predictions produced on the cluster.
 
 ## Setup
 
-Python 3 (3.11 was used on the cluster). Main dependencies: `torch`, `transformers`, `datasets`, `accelerate`, `evaluate`, `numpy`. The notebooks also use Google Drive mounting when run on Colab.
+Python 3 (3.11 was used on the cluster). Main dependencies: `torch`, `transformers`, `datasets`, `accelerate`, `evaluate`, `numpy`.
 
 | Task | Environment |
 |---|---|
-| Training (notebooks) | Google Colab with a single T4 GPU and fp16. Each model takes roughly 1 to 1.5 hours. The `pip install` cell is already at the top of each notebook. |
-| Inference and evaluation (`infer.py`) | NUS SoC compute cluster, one H100 (47 GB) via `job.sbatch`, or any CUDA GPU. Needs only `torch`, `transformers`, `datasets`, `numpy`; see Reproducing, Option 2B. |
+| Training (`train.py`) | NUS SoC compute cluster, one H100 via `train.sbatch` (3 h limit). Section B. |
+| Inference and evaluation (`infer.py`) | NUS SoC compute cluster, one H100 (47 GB) via `job.sbatch`, or any CUDA GPU. Needs only `torch`, `transformers`, `datasets`, `numpy`; see section A. |

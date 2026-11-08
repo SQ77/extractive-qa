@@ -1,4 +1,4 @@
-"""Build the NewsQA subset in SQuAD v1.1 format (port of preprocess_newsqa.ipynb).
+"""Build the NewsQA subset in SQuAD v1.1 format.
 
 Downloads the MRQA 2019 NewsQA train/dev files (skipped if already present), converts them to the
 SQuAD JSON schema, runs character- and token-level alignment checks, and writes

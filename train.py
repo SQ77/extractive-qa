@@ -1,10 +1,10 @@
 """Training script for the cluster.
 
 Modes:
-    baseline  train_qa.ipynb                          bert-base-uncased -> SQuAD          -> qa_model
-    newsqa    finetune_bert_on_newsqa.ipynb           qa_model -> NewsQA                  -> qa_model_newsqa
-    distill   finetune_bert_on_newsqa_distill.ipynb   qa_model -> NewsQA + KL to teacher  -> qa_model_newsqa_distill
-    joint     train_joint_squad_newsqa.ipynb          bert-base-uncased -> SQuAD + NewsQA -> qa_model_joint
+    baseline  bert-base-uncased -> SQuAD          -> qa_model
+    newsqa    qa_model -> NewsQA                  -> qa_model_newsqa
+    distill   qa_model -> NewsQA + KL to teacher  -> qa_model_newsqa_distill
+    joint     bert-base-uncased -> SQuAD + NewsQA -> qa_model_joint
 
 After training, the model is evaluated on SQuAD dev and NewsQA dev with the official script.
 Predictions and metrics are written to --out_dir (default: outputs_train/), so they never
@@ -52,7 +52,7 @@ MODES = {
     "joint": ("qa_model_joint", 3e-5, "bert-squad-newsqa-joint"),
 }
 
-# Distillation hyperparameters (finetune_bert_on_newsqa_distill.ipynb)
+# Distillation hyperparameters
 DISTILL_WEIGHT = 1.0
 DISTILL_TEMPERATURE = 2.0
 
