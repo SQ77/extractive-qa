@@ -1,4 +1,4 @@
-"""Paired bootstrap significance tests (port of bootstrap_significance.ipynb).
+"""Paired bootstrap significance tests.
 
 Compares the SQuAD-only baseline, sequential fine-tune, joint training and distillation-regularized
 fine-tune, using per-question EM/F1 from the official scorer. CPU only; needs numpy.
