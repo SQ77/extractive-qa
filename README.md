@@ -33,8 +33,9 @@ SQuAD is evaluated on the full v1.1 dev set (10,570 questions). NewsQA is evalua
 | `bootstrap_significance.py` | Paired bootstrap significance tests on per-question scores (CPU only) |
 | `cpu.sbatch` | Slurm job script (no GPU) for `preprocess_newsqa.py` and `bootstrap_significance.py` |
 | `qa/evaluate-v2.0.py` | Official SQuAD scoring script |
-| `qa/predictions_*.json` | Saved dev-set predictions for every model (used by the bootstrap tests) |
+| `qa/predictions_*.json` | Saved dev-set predictions for every model, produced in Colab (the results reported in the write-up; used by the bootstrap tests) |
 | `outputs/` | Predictions written by cluster inference jobs (created when `job.sbatch` runs) |
+| `outputs_train/` | Predictions and metrics from retraining the models on the cluster with `train.py`, to reproduce the Colab results in `qa/` |
 | `Soc_cluster/README.md` | SoC Compute Cluster unofficial guide |
 
 ## Reproducing
@@ -138,7 +139,7 @@ sbatch --dependency=afterok:$b --job-name=train-distill train.sbatch --mode dist
 sbatch --job-name=train-joint train.sbatch --mode joint
 ```
 
-Add `--max_train_samples 2000 --max_eval_samples 500` for a quick smoke test. Predictions and `metrics_*.json` are written to `outputs_train/` (not `qa/`, so the saved predictions are not overwritten); compare them with the numbers in the Results table. Exact numbers can differ slightly from the reported results (different GPU, no gradient checkpointing, nondeterministic kernels).
+Add `--max_train_samples 2000 --max_eval_samples 500` for a quick smoke test. Predictions and `metrics_*.json` are written to `outputs_train/` (not `qa/`, which holds the Colab results, so they are not overwritten); compare them with the numbers in the Results table. Exact numbers can differ slightly from the reported results (different GPU, no gradient checkpointing, nondeterministic kernels).
 
 **Monitor the jobs.**
 
